@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sftp:config name="SFTP_Config" doc:name="SFTP Config" doc:id="b1965e80-5d7e-4847-8fc1-8478b8cfd025" >
+		<sftp:connection workingDir="/sanjeet/doc" host="test764.files.com" username="hawks.005@gmail.com" password="Cricketpassion*005" />
+	</sftp:config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bd1f599f-2a0f-453a-9378-6ca6e5e30b7f" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="sftpFlow" doc:id="50b0fd23-f721-4d23-b9fb-cb0d752f8d37" >
+		<http:listener doc:name="Listener" doc:id="17cf200e-1431-4e01-b3c8-4630d8899883" config-ref="HTTP_Listener_config" path="/sftp"/>
+		<ee:transform doc:name="Transform Message" doc:id="247af2b8-6cc5-42b4-b075-8c56546bba75" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import fromBase64 from dw::core::Binaries
+
+output application/java
+---
+fromBase64(payload.content)]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="filename" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.filename]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<sftp:write doc:id="07eec6b4-fb31-424e-8d30-35591d41d3a2" config-ref="SFTP_Config" path="#[vars.filename]"/>
+		<ee:transform doc:name="Transform Message" doc:id="613709c8-5d22-4fa2-8def-a41f245077df" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status:"success",
+	message:"File created successfully in SFTP"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
